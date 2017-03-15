@@ -25,8 +25,16 @@
 ** Use this interface as a model for other database engine interfaces.
 */
 #include "sqlite3.h"
-#include <ctype.h>
+#include "sqllogictest.h"
+
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 /*
 ** The SQLite database connection object

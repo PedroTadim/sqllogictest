@@ -24,6 +24,8 @@
 ** This module defines the interfaces to the sqllogictest program.
 */
 
+#ifndef SQL_LOGIC_TEST_H
+#define SQL_LOGIC_TEST_H
 
 /*
 ** The interface to each database engine is an instance of the
@@ -56,3 +58,5 @@ void sqllogictestRegisterEngine(const DbEngine*);
 */
 void md5_add(const char *z);
 const char *md5_finish(void);
+
+#endif

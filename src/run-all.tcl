@@ -35,11 +35,12 @@ search_for_test_cases ../test
 set totalerr 0
 set totaltest 0
 set totalrun 0
+set hehehe "\"DSN=MonetDB;HOST=localhost;PORT=50000;\""
 foreach tx [lsort [array names tcase]] {
   foreach opt {0 0xfff} {
     set opt "integrity_check;optimizer=[expr {$opt+0}]"
     catch {
-      exec $BIN -verify -parameter $opt $tx
+      exec $BIN --connection hehehe -verify -parameter $opt $tx
     } res
     puts $res
     if {[regexp {(\d+) errors out of (\d+) tests} $res all nerr ntst]} {

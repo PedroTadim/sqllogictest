@@ -34,20 +34,26 @@
 */
 #ifndef OMIT_ODBC  /* Omit this module if OMIT_ODBC is defined */
 
+#include "sqllogictest.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #ifdef _WIN32
 #include <windows.h>
+#else
+#define stricmp strcasecmp
 #endif
-#define SQL_NOUNICODEMAP
+
 #include <sql.h>
 #include <sqlext.h>
-
 
 #define SLT_DSN   "sqllogictest"
 #define SLT_DB    "slt"
 #define SLT_USER  "slt"
 
-
-/* 
+/*
 ** Forward prototypes.
 */
 static int ODBC3Statement(
@@ -87,13 +93,13 @@ static void ODBC3_perror(char *fn,
 
   do
   {
-    ret = SQLGetDiagRec(type, 
-                        handle, 
-                        ++i, 
-                        state, 
-                        &native, 
+    ret = SQLGetDiagRec(type,
+                        handle,
+                        ++i,
+                        state,
+                        &native,
                         text,
-                        sizeof(text), 
+                        sizeof(text),
                         &len );
     if (SQL_SUCCEEDED(ret))
     {
@@ -153,8 +159,8 @@ static void ODBC3_appendValue(ODBC3_resAccum *p, const char *zValue){
 
 /*
 ** Drop all tables from the database on the current connection.
-** This utility function goes to great lengths to ensure 
-** only tables in the test database are dropped. 
+** This utility function goes to great lengths to ensure
+** only tables in the test database are dropped.
 */
 static int ODBC3_dropAllTables(ODBC3_Handles *pODBC3conn)
 {
@@ -171,7 +177,7 @@ static int ODBC3_dropAllTables(ODBC3_Handles *pODBC3conn)
    * processing based on the engine.
    */
   ODBC3GetEngineName(pODBC3conn, &zDmbsName);
-  
+
   /* zero out accumulator structure */
   memset(&res, 0, sizeof(res));
 
@@ -190,16 +196,16 @@ static int ODBC3_dropAllTables(ODBC3_Handles *pODBC3conn)
     ODBC3_perror("SQLTables", stmt, SQL_HANDLE_STMT);
     rc = 1;
   }
-  
+
   if( !rc ){
     /* How many columns are there */
     SQLNumResultCols(stmt, &columns);
     if( columns != 5 ){
       /* Non-standard result set.  Could be non-standard ODBC
-      ** driver, or we're looking at wrong DB.  Return an 
-      ** error and force them to fix this by hand. 
+      ** driver, or we're looking at wrong DB.  Return an
+      ** error and force them to fix this by hand.
       ** We don't want to accidentally delete something important. */
-      fprintf(stdout, 
+      fprintf(stdout,
               "result set of tables has wrong number of columns: %ld\n",
               (long)columns);
       rc = 1;
@@ -213,13 +219,13 @@ static int ODBC3_dropAllTables(ODBC3_Handles *pODBC3conn)
       if (SQL_SUCCEEDED(ret)) {
         /* Loop through the columns in the row */
         for( i=1; i<=columns; i++ ){
-          SQLINTEGER indicator;
+          SQLLEN indicator;
           char zBuffer[512];
           /* retrieve column data as a string */
-          ret = SQLGetData(stmt, 
+          ret = SQLGetData(stmt,
                            i, SQL_C_CHAR,
-                           zBuffer, sizeof(zBuffer), 
-                           &indicator);
+                           zBuffer, sizeof(zBuffer),
+                             &indicator);
           if (SQL_SUCCEEDED(ret)) {
             /* Handle null columns */
             if (indicator == SQL_NULL_DATA){
@@ -234,13 +240,13 @@ static int ODBC3_dropAllTables(ODBC3_Handles *pODBC3conn)
       }
     } while (SQL_SUCCEEDED(ret) || (ret ==  SQL_SUCCESS_WITH_INFO));
   }
-  
+
   if( stmt != SQL_NULL_HSTMT ){
     SQLFreeHandle(SQL_HANDLE_STMT, stmt);
   }
 
   if( !rc ){
-  
+
     /* Find the name of the database (defaults to SLT_DB).
     ** When looping through the tables to delete, only delete
     ** tables from that database.
@@ -320,7 +326,22 @@ static int ODBC3_dropAllTables(ODBC3_Handles *pODBC3conn)
           rc = ODBC3Statement(pODBC3conn, zSql, 0);
         }
       }
-    }else{
+    }/*else if( 0 == stricmp(zDmbsName, "monetdb") ){ Don't know if this is needed
+      for( i=0; !rc && (i+4<res.nUsed); i+=5 ){
+        if(    (0 == stricmp(res.azValue[i], zDbName))
+               && (0 == strcmp(res.azValue[i+1], "(empty)")
+                   || 0 == strcmp(res.azValue[i+1], "NULL")
+                   || 0 == stricmp(res.azValue[i+1], "public"))
+               && (strlen(res.azValue[i+2])>0)
+               && (0 == strcmp(res.azValue[i+3], "TABLE"))
+               && (0 == strcmp(res.azValue[i+4], "(empty)")
+                   || 0 == strcmp(res.azValue[i+4], "NULL"))
+                ){
+          sprintf(zSql, "DROP TABLE %s", res.azValue[i+2]);
+          rc = ODBC3Statement(pODBC3conn, zSql, 0);
+        }
+      }
+    }*/else{
       for( i=0; !rc && (i+4<res.nUsed); i+=5 ){
         if(    (0 == strcmp(res.azValue[i], zDbName)
                  || 0 == strcmp(res.azValue[i], "NULL"))
@@ -568,7 +589,7 @@ static int ODBC3Query(
       if( SQL_SUCCEEDED(ret) ){
         /* Loop through the columns */
         for(i = 1; !rc && (i <= columns); i++){
-          SQLINTEGER indicator = 0;
+          SQLLEN indicator = 0;
           switch( zType[i-1] ){
             case 'T': {
               /* retrieve column data as a string */

@@ -26,9 +26,7 @@
 #include "sqllogictest.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #ifndef _WIN32
-#include <unistd.h>
 #define stricmp strcasecmp
 #endif
 #include <string.h>
